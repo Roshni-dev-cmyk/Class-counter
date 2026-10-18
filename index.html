@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Monthly class counter (IST)</title>
+<style>
+:root{--bg:#f3f5f1;--surface:#fff;--ink:#1d2a24;--muted:#5d6b64;--line:#d8dfd9;--accent:#1f6b4f;--accent-ink:#fff;--chip:#e3efe8;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141b17;--surface:#1c2621;--ink:#e6eee9;--muted:#9aaba2;--line:#2c3a33;--accent:#5fc79b;--accent-ink:#0e1a14;--chip:#25382f;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#141b17;--surface:#1c2621;--ink:#e6eee9;--muted:#9aaba2;--line:#2c3a33;--accent:#5fc79b;--accent-ink:#0e1a14;--chip:#25382f;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Source Sans 3","Segoe UI",system-ui,sans-serif}
+main{max-width:980px;margin:0 auto;padding:24px 16px 48px}
+h1{font:700 28px/1.2 Georgia,"Times New Roman",serif;margin:0 0 4px}
+p.sub{color:var(--muted);margin:0 0 20px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+label{font-weight:600;display:block;margin-bottom:6px}
+textarea{width:100%;height:150px;font:13px/1.4 ui-monospace,Menlo,Consolas,monospace;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:8px}
+.row{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;margin-top:12px}
+input[type=month]{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+.chk{display:flex;gap:8px;align-items:center;font-weight:400;margin:0}
+button{font:600 16px inherit;background:var(--accent);color:var(--accent-ink);border:0;border-radius:6px;padding:9px 18px;cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.total{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.total b{font:700 56px/1 Georgia,serif;color:var(--accent)}
+.note{color:var(--muted);font-size:14px;margin:6px 0 0}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:680px}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--muted);font-size:14px}
+td.n{font:700 22px Georgia,serif;color:var(--accent)}
+.chip{display:inline-block;background:var(--chip);border-radius:5px;padding:1px 7px;margin:2px 4px 2px 0;font-size:13px;white-space:nowrap}
+.err{color:#b3261e}
+</style>
+</head>
+<body>
+<main>
+<h1>Monthly class counter</h1>
+<p class="sub">Paste your class list, pick a month, and see how many sessions fall in it by Indian time.</p>
+
+<div class="panel">
+<label for="data">Class data</label>
+<textarea id="data" spellcheck="false"></textarea>
+<div class="row">
+<div><label for="month">Month (IST)</label><input type="month" id="month"></div>
+<label class="chk"><input type="checkbox" id="dst" checked> Follow US daylight saving</label>
+<button id="go">Count classes</button>
+</div>
+<p class="note">US daylight saving ends on Sunday, 1 November 2026. Classes labelled PST actually run on PDT until then, so IST times shift by an hour afterwards. Untick the box to treat every date as standard time.</p>
+</div>
+
+<div id="out"></div>
+</main>
+<script>
+var SAMPLE = `G79-3 Introduction to Python
+US (RM) G79-3 Introduction to Python Sun 4:30 PM PST | ID:3848
+Teacher: Roshni Mahajan
+Class Progress0%
+A
+Aishani
+PTM
+View DetailsStart Session
+Next Session Mon, Oct 19th, 5:00 am
+G79-1 Static & AI-Enhanced Web Pages
+US (RM) G79-1 Web Development using HTML & CSS Mon 7:00 PM PST | ID:3809
+Teacher: Roshni Mahajan
+Class Progress0%
+A
+Aariv
+PTM
+View DetailsStart Session
+Next Session Tue, Oct 20th, 7:30 am
+AI Engineer
+US (RM) AI Engineer Mon 8:30 PM PST | ID:3738
+Teacher: Roshni Mahajan
+Class Progress83%
+M
+Manith
+PTM
+View DetailsStart Session
+Next Session Tue, Oct 20th, 9:00 am
+G79-7 Object-Oriented Programming in Python
+US (RM) G79-7 Object-Oriented Programming in Python Tue 5:30 PM PST | ID:3814
+Teacher: Roshni Mahajan
+Class Progress16%
+A
+Avira
+PTM
+View DetailsStart Session
+Next Session Wed, Oct 21st, 6:00 am
+G79-2 Dynamic Web Pages
+US (RM) G79-2 Dynamic Web Pages Wed 6:30 PM CST | ID:3799
+Teacher: Roshni Mahajan
+Class Progress16%
+R
+Raama
+PTM
+View DetailsStart Session
+Next Session Thu, Oct 22nd, 5:00 am
+G79-1 Static & AI-Enhanced Web Pages
+US (RM) G79-1 Web Development using HTML & CSS Wed 7:00 PM PST | ID:3731
+Teacher: Roshni Mahajan
+Class Progress91%
+N
+Neha
+PTM
+View DetailsStart Session
+Next Session Thu, Oct 22nd, 7:30 am
+G79-2 Dynamic Web Pages
+US (RM) G79-2 Dynamic Web Pages Thu 7:45 PM PST | ID:3791
+Teacher: Roshni Mahajan
+Class Progress50%`;
+
+var DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+var MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+var ZONES = {
+  PST:["America/Los_Angeles",-8],PDT:["America/Los_Angeles",-7],
+  MST:["America/Denver",-7],MDT:["America/Denver",-6],
+  CST:["America/Chicago",-6],CDT:["America/Chicago",-5],
+  EST:["America/New_York",-5],EDT:["America/New_York",-4]
+};
+var IST = 19800000;
+
+function parse(text){
+  var lines = text.split(/\r?\n/).map(function(l){return l.trim();});
+  var re = /^(.*?)\s+(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+(\d{1,2}):(\d{2})\s*(AM|PM)\s+([A-Z]{3})\s*\|\s*ID:\s*(\d+)/i;
+  var out = [], cur = null;
+  lines.forEach(function(l, i){
+    var m = l.match(re);
+    if (m){
+      var h = parseInt(m[3],10) % 12; if (/pm/i.test(m[5])) h += 12;
+      cur = {full:l, name:m[1].replace(/^US\s*\(RM\)\s*/i,""), day:DAYS.indexOf(m[2][0].toUpperCase()+m[2].slice(1).toLowerCase()),
+        dayLabel:m[2], h:h, min:parseInt(m[4],10), tz:m[6].toUpperCase(), id:m[7], students:[], initials:[], progress:""};
+      out.push(cur);
+    } else if (cur){
+      var p = l.match(/^Class Progress/i);
+      if (p){
+        cur.progress = "";
+        for (var j = i + 1; j < lines.length; j++){
+          var t = lines[j];
+          if (!t || /^\d+%$/.test(t)) continue;
+          if (/^(PTM|View Details|Start Session|Next Session)/i.test(t) || re.test(t)) break;
+          if (/^[A-Za-z]$/.test(t)){ cur.initials.push(t); continue; }
+          t.split(/\s*,\s*/).forEach(function(n){ if (n) cur.students.push(n); });
+        }
+      }
+    }
+  });
+  return out;
+}
+
+function offsetAt(utcMs, tz){
+  var f = new Intl.DateTimeFormat("en-US",{timeZone:tz,hourCycle:"h23",year:"numeric",month:"numeric",day:"numeric",hour:"numeric",minute:"numeric",second:"numeric"});
+  var o = {}; f.formatToParts(new Date(utcMs)).forEach(function(p){o[p.type]=parseInt(p.value,10);});
+  return Date.UTC(o.year,o.month-1,o.day,o.hour,o.minute,o.second) - Math.floor(utcMs/1000)*1000;
+}
+function localToUtc(y,mo,d,h,mi,tz){
+  var guess = Date.UTC(y,mo,d,h,mi);
+  var utc = guess - offsetAt(guess,tz);
+  return guess - offsetAt(utc,tz);
+}
+
+function sessions(c, year, month, useDst){
+  var z = ZONES[c.tz] || ZONES.PST, res = [];
+  var dim = new Date(Date.UTC(year,month+1,0)).getUTCDate();
+  for (var d = -2; d <= dim + 2; d++){
+    var dt = new Date(Date.UTC(year,month,1+d-1+0));
+    dt = new Date(Date.UTC(year,month,d));
+    if (dt.getUTCDay() !== c.day) continue;
+    var utc = useDst ? localToUtc(dt.getUTCFullYear(),dt.getUTCMonth(),dt.getUTCDate(),c.h,c.min,z[0])
+                     : Date.UTC(dt.getUTCFullYear(),dt.getUTCMonth(),dt.getUTCDate(),c.h,c.min) - z[1]*3600000;
+    var ist = new Date(utc + IST);
+    if (ist.getUTCFullYear() === year && ist.getUTCMonth() === month) res.push(ist);
+  }
+  return res.sort(function(a,b){return a-b;});
+}
+function fmtTime(d){
+  var h = d.getUTCHours(), m = d.getUTCMinutes(), ap = h >= 12 ? "PM" : "AM";
+  return ((h % 12) || 12) + ":" + String(m).padStart(2,"0") + " " + ap;
+}
+var COPY = "";
+function copyData(){
+  var msg = document.getElementById("copied");
+  function ok(){ msg.textContent = "Copied. Paste into Excel or Google Sheets."; }
+  function fallback(){
+    var t = document.createElement("textarea"); t.value = COPY; document.body.appendChild(t); t.select();
+    try { document.execCommand("copy"); ok(); } catch(e){ msg.textContent = "Copy failed. Select the table and copy it by hand."; }
+    document.body.removeChild(t);
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(COPY).then(ok, fallback); else fallback();
+}
+function studentText(c){
+  var total = Math.max(c.initials.length, c.students.length);
+  if (!total) return "";
+  var extra = total - c.students.length, s = c.students.join(", ");
+  if (extra > 0) s += (s ? " + " : "") + extra + " more (initials " + c.initials.slice(c.students.length).join(", ") + ")";
+  return " · " + (total > 1 ? "Students (" + total + "): " : "Student: ") + esc(s);
+}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+
+function run(){
+  var out = document.getElementById("out");
+  var mv = document.getElementById("month").value;
+  var classes = parse(document.getElementById("data").value);
+  if (!mv){ out.innerHTML = '<p class="err">Pick a month first.</p>'; return; }
+  if (!classes.length){ out.innerHTML = '<p class="err">No classes found. Each class needs a line like “US (RM) … Thu 7:45 PM PST | ID:3791”.</p>'; return; }
+  var year = +mv.slice(0,4), month = +mv.slice(5,7) - 1, useDst = document.getElementById("dst").checked;
+  var total = 0, rows = "", st = {one:{b:0,s:0}, many:{b:0,s:0}}; COPY = "";
+  classes.forEach(function(c){
+    var s = sessions(c, year, month, useDst); total += s.length;
+    var many = Math.max(c.initials.length, c.students.length) > 1, type = many ? "1:many" : "1:1", g = many ? st.many : st.one;
+    g.b++; g.s += s.length; COPY += c.full + "\t" + s.length + "\n";
+    var chips = s.map(function(d){return '<span class="chip">'+DAYS[d.getUTCDay()]+" "+d.getUTCDate()+", "+fmtTime(d)+"</span>";}).join("");
+    var first = s[0] ? DAYS[s[0].getUTCDay()] + " " + fmtTime(s[0]) : "–";
+    rows += "<tr><td><b>"+esc(c.name)+"</b><br><span class='note'>ID "+esc(c.id)+studentText(c)+" · "+type+"</span></td>"+
+      "<td>"+esc(c.dayLabel)+" "+fmtTime({getUTCHours:function(){return c.h;},getUTCMinutes:function(){return c.min;}})+" "+esc(c.tz)+"</td>"+
+      "<td>"+(s.length? chips : "No sessions")+"</td><td class='n'>"+s.length+"</td></tr>";
+  });
+  out.innerHTML = '<div class="panel"><div class="total"><b>'+total+'</b><span>classes in '+MONTHS[month]+' '+year+' (IST), across '+classes.length+' batches</span></div><p class="note">1:1 – '+st.one.s+' classes ('+st.one.b+' batches) · 1:many – '+st.many.s+' classes ('+st.many.b+' batches)</p><p><button id="copy" type="button">Copy for spreadsheet</button> <span id="copied" class="note"></span></p></div>'+
+    '<div class="panel scroll"><table><thead><tr><th>Class</th><th>US schedule</th><th>Sessions in IST</th><th>Count</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  document.getElementById("copy").addEventListener("click", copyData);
+}
+
+document.getElementById("data").value = SAMPLE;
+var now = new Date();
+document.getElementById("month").value = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2,"0");
+document.getElementById("go").addEventListener("click", run);
+document.getElementById("month").addEventListener("change", run);
+document.getElementById("dst").addEventListener("change", run);
+run();
+</script>
+</body>
+</html>
